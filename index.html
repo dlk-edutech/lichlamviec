@@ -279,7 +279,7 @@
                         <button class="btn btn-secondary w-100 fw-bold" id="btnCancelSchoolEdit" onclick="cancelSchoolEdit()" style="display:none">HỦY</button>
                     </div>
                 </div>
-                <div class="mt-2 text-muted small"><i>* Tự thêm "TRƯỜNG". User: <b>[tên không dấu]</b>.</i></div>
+                <div class="mt-2 text-muted small"><i>* Tự thêm "TRƯỜNG" vào tên hiển thị. User: <b>[nhập sao y vậy, không dấu]</b>.</i></div>
             </div>
             <div class="table-responsive">
                 <table class="table table-bordered table-striped"><thead class="table-dark"><tr><th>Tên Trường</th><th>User</th><th>Pass</th><th>Link</th><th style="width: 140px;">Thao tác</th></tr></thead><tbody id="schoolsListBody"></tbody></table>
@@ -559,7 +559,7 @@
                 }
                 // Thêm đường kẻ nếu có cả sáng và chiều
                 if (renderMorning && renderAfternoon) {
-                     mobileContent += `<hr class="mobile-separator">`;
+                      mobileContent += `<hr class="mobile-separator">`;
                 }
                 if (renderAfternoon) {
                     mobileContent += `<div class="mobile-session-block"><span class="mobile-session-label">Buổi Chiều:</span>${renderAfternoon}</div>`;
@@ -735,7 +735,36 @@
 
     window.deleteItem = (k) => confirm("Xóa?") && remove(ref(db, getDbPath('schedules/'+k)));
 
-    window.saveSchoolInfo = () => { if(currentRole!=='root')return; const k=document.getElementById("editingSchoolKey").value; let n=document.getElementById("newSchoolName").value.trim(); const c=document.getElementById("newSchoolCode").value.trim(); if(!n||c.length<4){alert("Lỗi nhập!");return;} if(!n.toUpperCase().startsWith("TRƯỜNG")) n="TRƯỜNG "+n; n=n.toUpperCase(); if(k){ update(ref(db,'schools_registry/'+k),{name:n,password:c}).then(()=>{alert("Cập nhật xong!");cancelSchoolEdit();}); } else { const u=removeVietnameseTones(n); get(ref(db,'schools_registry/'+u)).then(s=>{ if(s.exists())alert("Trùng!"); else set(ref(db,'schools_registry/'+u),{name:n,username:u,password:c,createdAt:new Date().toISOString()}).then(()=>{alert("Đã tạo!");cancelSchoolEdit();}); }); } };
+    window.saveSchoolInfo = () => { 
+        if(currentRole!=='root') return;
+        const k=document.getElementById("editingSchoolKey").value;
+        let n=document.getElementById("newSchoolName").value.trim(); 
+        const c=document.getElementById("newSchoolCode").value.trim(); 
+        
+        if(!n||c.length<4){alert("Lỗi nhập!");return;} 
+        
+        // Logic hiển thị: Luôn thêm chữ TRƯỜNG vào tên hiển thị nếu chưa có
+        let displayName = n;
+        if(!displayName.toUpperCase().startsWith("TRƯỜNG")) displayName = "TRƯỜNG "+displayName; 
+        displayName = displayName.toUpperCase(); 
+
+        if(k){ 
+            update(ref(db,'schools_registry/'+k),{name:displayName,password:c}).then(()=>{alert("Cập nhật xong!");cancelSchoolEdit();}); 
+        } else { 
+            // Logic User: Dùng chính cái tên nhập vào (n), không dùng displayName để tránh bị thêm chữ 'truong'
+            const u=removeVietnameseTones(n); 
+            
+            get(ref(db,'schools_registry/'+u)).then(s=>{ 
+                if(s.exists()) alert("Trùng tên đăng nhập ("+u+")!"); 
+                else set(ref(db,'schools_registry/'+u),{
+                    name:displayName,
+                    username:u,
+                    password:c,
+                    createdAt:new Date().toISOString()
+                }).then(()=>{alert("Đã tạo! User: "+u);cancelSchoolEdit();}); 
+            }); 
+        } 
+    };
     window.startEditSchool = (u,n,p) => { document.getElementById("editingSchoolKey").value=u; document.getElementById("newSchoolName").value=n; document.getElementById("newSchoolCode").value=p; document.getElementById("schoolFormTitle").innerText="CẬP NHẬT TRƯỜNG"; document.getElementById("btnSaveSchool").innerText="CẬP NHẬT"; document.getElementById("btnCancelSchoolEdit").style.display="block"; };
     window.cancelSchoolEdit = () => { document.getElementById("editingSchoolKey").value=""; document.getElementById("newSchoolName").value=""; document.getElementById("newSchoolCode").value="1234"; document.getElementById("schoolFormTitle").innerText="TẠO TRƯỜNG MỚI"; document.getElementById("btnSaveSchool").innerText="TẠO NGAY"; document.getElementById("btnCancelSchoolEdit").style.display="none"; };
     window.deleteSchool = (u) => { if(!confirm("Xóa vĩnh viễn trường này?"))return; const p=prompt("Mật khẩu ROOT:"); if(p!=='123456'){alert("Sai mật khẩu!");return;} remove(ref(db,'schools_registry/'+u)); remove(ref(db,'schools_data/'+u)); alert("Đã xóa!"); };
