@@ -486,7 +486,7 @@
         }
     };
 
-    window.logoutAdmin = () => { window.location.href = window.location.origin + window.location.pathname; };
+    window.logoutAdmin = () => { window.location.reload(); };
 
     window.loadSchedule = function(isUserSelected = false) {
         let viewDateStr = document.getElementById("viewDate").value;
