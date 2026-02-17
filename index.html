@@ -389,7 +389,7 @@
     }
 
     window.toggleAdmin = function() {
-        const inputLogin = prompt("Nhập thông tin đăng nhập:\n- Admin Gốc: 123456 (hoặc mật khẩu đã đổi)\n- Admin Trường: [TênViếtLiền][MãBảoMật]\n- Tài khoản con: [Tên][Mã] (Ví dụ: gv011234)");
+        const inputLogin = prompt("Nhập thông tin đăng nhập:\n[Tên][Mã] (Ví dụ: thptabc1234)");
         if (!inputLogin) return;
 
         const dbRef = ref(db);
