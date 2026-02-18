@@ -177,7 +177,7 @@
         </div>
 
         <ul class="nav nav-tabs mb-3" id="adminTabs">
-            <li class="nav-item admin-only"><button class="nav-link active" onclick="switchTab('general')">1. Cấu Hình Tuần & Chung</button></li>
+            <li class="nav-item admin-only"><button class="nav-link active" onclick="switchTab('general')">1. Cấu Hình & Chung</button></li>
             <li class="nav-item"><button class="nav-link" onclick="switchTab('manual')">2. Nhập Lịch</button></li>
             <li class="nav-item admin-only"><button class="nav-link" onclick="switchTab('excel')">3. Excel (Nhập/Xuất)</button></li>
             <li class="nav-item admin-only"><button class="nav-link" onclick="switchTab('list')">4. Tất cả dữ liệu</button></li>
@@ -186,6 +186,16 @@
         </ul>
 
         <div id="tabGeneral">
+            <div class="card card-body bg-light mb-3">
+                <h6 class="fw-bold text-danger"><i class="fas fa-university"></i> CẬP NHẬT TÊN TRƯỜNG</h6>
+                <div class="input-group">
+                    <span class="input-group-text fw-bold">Tên hiển thị:</span>
+                    <input type="text" id="inputSchoolDisplayName" class="form-control" placeholder="VD: TRƯỜNG THPT ...">
+                    <button class="btn btn-danger" onclick="saveSchoolDisplayName()">LƯU TÊN</button>
+                </div>
+                <div class="small text-muted mt-1"><i>* Tên này sẽ hiện ở dòng chữ đỏ phía trên.</i></div>
+            </div>
+
             <div class="card card-body bg-light mb-3">
                 <h6 class="fw-bold text-primary"><i class="fas fa-cogs"></i> THIẾT LẬP MỐC TUẦN & NỘI DUNG CHUNG</h6>
                 <div class="row g-2 align-items-end">
@@ -385,7 +395,17 @@
                 alert("Không tìm thấy trường! Quay về mặc định.");
                 window.location.href = window.location.pathname;
             }
-        } else { loadSchedule(); }
+        } else { 
+            // Nếu là Root, thử lấy tên trường từ system_config nếu có
+            get(ref(db, 'system_config/schoolName')).then(snap => {
+                if(snap.exists()) {
+                     currentSchoolName = snap.val();
+                     document.getElementById('headerSchoolName').innerText = currentSchoolName;
+                     document.getElementById('excelTargetSchool').innerText = currentSchoolName;
+                }
+            });
+            loadSchedule(); 
+        }
     }
 
     window.toggleAdmin = function() {
@@ -420,14 +440,14 @@
             } else {
                 const rootPass = snapshot.child('system_config/root_password').val() || "123456";
                 if (inputLogin === rootPass) {
-                    setSession('root', 'root', 'ROOT ADMIN', 'TRƯỜNG THPT SỐ 1 TRẦN PHÚ', null);
+                    setSession('root', 'root', 'ROOT ADMIN', currentSchoolName, null);
                     found = true; return;
                 }
                 const rootSubs = snapshot.child('subAccounts').val();
                 if (rootSubs) {
                     for (const [key, val] of Object.entries(rootSubs)) {
                         if (val.username + val.code === inputLogin) {
-                            setSession('root', 'sub_account', val.username, 'TRƯỜNG THPT SỐ 1 TRẦN PHÚ', key);
+                            setSession('root', 'sub_account', val.username, currentSchoolName, key);
                             found = true; return;
                         }
                     }
@@ -466,6 +486,10 @@
         document.getElementById("btnChangePass").style.display = "block";
         document.querySelectorAll('.admin-only').forEach(el => el.style.display = isAdmin ? 'block' : 'none');
         document.querySelectorAll('.root-only').forEach(el => el.style.display = isRoot ? 'block' : 'none');
+        
+        // Điền tên trường hiện tại vào ô nhập liệu
+        document.getElementById("inputSchoolDisplayName").value = currentSchoolName;
+
         if (!isAdmin) {
             document.getElementById('tabGeneral').style.display = 'none';
             switchTab('manual');
@@ -474,6 +498,31 @@
         }
         if (isRoot) loadSchoolsList();
     }
+
+    window.saveSchoolDisplayName = () => {
+        if (!['root', 'school_admin'].includes(currentRole)) return;
+        const name = document.getElementById("inputSchoolDisplayName").value.trim();
+        if (!name) { alert("Vui lòng nhập tên!"); return; }
+
+        if (currentSchoolId === 'root') {
+             // Với Root, lưu vào system_config
+             update(ref(db, 'system_config'), { schoolName: name }).then(() => {
+                 alert("Đã cập nhật tên trường (Root)!");
+                 document.getElementById("headerSchoolName").innerText = name;
+                 currentSchoolName = name;
+                 document.getElementById("userInfoDisplay").innerText = `User: ${currentUser} | ${currentSchoolName}`;
+             });
+        } else {
+             // Với trường thành phần, lưu vào schools_registry
+             update(ref(db, `schools_registry/${currentSchoolId}`), { name: name }).then(() => {
+                 alert("Đã cập nhật tên trường!");
+                 document.getElementById("headerSchoolName").innerText = name;
+                 document.getElementById("subSchoolName").innerText = name;
+                 currentSchoolName = name;
+                 document.getElementById("userInfoDisplay").innerText = `User: ${currentUser} | ${currentSchoolName}`;
+             });
+        }
+    };
 
     window.changePassword = async () => {
         const newPass = prompt("Nhập mật khẩu/mã bảo mật mới (phần sau tên đăng nhập): ");
