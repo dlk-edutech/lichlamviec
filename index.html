@@ -476,7 +476,7 @@
     }
 
     window.changePassword = async () => {
-        const newPass = prompt("Nhập mật khẩu/mã bảo mật mới:");
+        const newPass = prompt("Nhập mật khẩu/mã bảo mật mới (phần sau tên đăng nhập): ");
         if(!newPass) return;
         if (currentRole === 'root') { await set(ref(db, 'system_config/root_password'), newPass); alert("Đã đổi!"); } 
         else if(currentRole === 'school_admin') { await update(ref(db, `schools_registry/${currentUserKey}`), { password: newPass }); alert("Đã đổi!"); } 
