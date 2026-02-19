@@ -791,7 +791,7 @@
         return '';
     }
 
-    window.exportToExcel = () => { if(!confirm("Tải xuống?"))return; get(ref(db, getDbPath('schedules'))).then(s=>{if(!s.exists()){alert("Trống!");return;} const d=[]; s.forEach(c=>{const v=c.val(); d.push({"Ngày":v.date,"Buổi":v.session,"Giờ":v.time,"Nội dung":v.content,"Người":v.person});}); d.sort((a,b)=>new Date(a['Ngày'])-new Date(b['Ngày'])); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(d),"Lich"); XLSX.writeFile(wb,`Lich_${removeVietnameseTones(currentSchoolName)}.xlsx`); }); };
+    window.exportToExcel = () => { if(!confirm("Tải xuống?"))return; get(ref(db, getDbPath('schedules'))).then(s=>{ const d=[]; if(s.exists()){ s.forEach(c=>{const v=c.val(); d.push({"Ngày":v.date,"Buổi":v.session,"Giờ":v.time,"Nội dung":v.content,"Người thực hiện":v.person});}); d.sort((a,b)=>new Date(a['Ngày'])-new Date(b['Ngày'])); } const wb=XLSX.utils.book_new(); const ws = d.length > 0 ? XLSX.utils.json_to_sheet(d) : XLSX.utils.json_to_sheet([], {header:["Ngày", "Buổi", "Giờ", "Nội dung", "Người thực hiện"]}); XLSX.utils.book_append_sheet(wb,ws,"Lich"); XLSX.writeFile(wb,`Lich_${removeVietnameseTones(currentSchoolName)}.xlsx`); }); };
     
     window.createSubAccount = () => { 
         const u = document.getElementById("accUsername").value.trim(); 
