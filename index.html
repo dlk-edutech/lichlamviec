@@ -341,6 +341,34 @@
   </div>
 </div>
 
+<div class="modal fade" id="loginModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title"><i class="fas fa-user-lock"></i> Đăng Nhập Quản Trị</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="fw-bold">Thông tin đăng nhập [Tên][Mã]:</label>
+          <input type="password" id="loginInput" class="form-control" placeholder="Ví dụ: thptabc1234">
+        </div>
+        <div class="form-check mb-3">
+          <input class="form-check-input" type="checkbox" id="rememberLogin">
+          <label class="form-check-label" for="rememberLogin">Lưu thông tin đăng nhập</label>
+        </div>
+      </div>
+      <div class="modal-footer justify-content-between">
+        <button type="button" class="btn btn-outline-secondary" onclick="clearSavedLogin()">Xóa thông tin lưu</button>
+        <div>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+          <button type="button" class="btn btn-danger" onclick="executeLogin()">Đăng Nhập</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
     import { getDatabase, ref, push, set, onValue, remove, update, get, child } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
@@ -363,7 +391,7 @@
         return str.toLowerCase().replace(/\s+/g, '');
     }
 
-    // Hàm lấy ngày chuẩn (Local Time) để tránh lỗi UTC
+    // Ham lay ngay chuan (Local Time) de tranh loi UTC
     function formatDateISO(date) {
         const y = date.getFullYear();
         const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -396,7 +424,7 @@
                 window.location.href = window.location.pathname;
             }
         } else { 
-            // Nếu là Root, thử lấy tên trường từ system_config nếu có
+            // Neu la Root, thu lay ten truong tu system_config neu co
             get(ref(db, 'system_config/schoolName')).then(snap => {
                 if(snap.exists()) {
                      currentSchoolName = snap.val();
@@ -408,13 +436,44 @@
         }
     }
 
+    // Ham hien thi modal dang nhap va doc data tu localStorage
     window.toggleAdmin = function() {
-        const inputLogin = prompt("Nhập thông tin đăng nhập:\n[Tên][Mã] (Ví dụ: thptabc1234)");
-        if (!inputLogin) return;
+        const savedInfo = localStorage.getItem('savedLoginInfo');
+        const loginInput = document.getElementById('loginInput');
+        const rememberCheckbox = document.getElementById('rememberLogin');
+        
+        if (savedInfo) {
+            loginInput.value = savedInfo;
+            rememberCheckbox.checked = true;
+        } else {
+            loginInput.value = '';
+            rememberCheckbox.checked = false;
+        }
+        
+        const myModal = new bootstrap.Modal(document.getElementById('loginModal'));
+        myModal.show();
+    };
+
+    // Ham thuc thi dang nhap
+    window.executeLogin = function() {
+        const inputLogin = document.getElementById('loginInput').value.trim();
+        if (!inputLogin) { alert("Vui lòng nhập thông tin!"); return; }
+
+        if (document.getElementById('rememberLogin').checked) {
+            localStorage.setItem('savedLoginInfo', inputLogin);
+        } else {
+            localStorage.removeItem('savedLoginInfo');
+        }
 
         const dbRef = ref(db);
         get(dbRef).then((snapshot) => {
             let found = false;
+            
+            const closeLoginModal = () => {
+                const modalEl = document.getElementById('loginModal');
+                const modal = bootstrap.Modal.getInstance(modalEl);
+                if (modal) modal.hide();
+            };
             
             if (currentSchoolId !== 'root') {
                 const schoolData = snapshot.child('schools_data/' + currentSchoolId).val();
@@ -425,7 +484,7 @@
                              const schools = snapshot.child('schools_registry').val();
                              const schoolName = schools[currentSchoolId].name;
                              setSession(currentSchoolId, 'sub_account', simpleUser, schoolName, subKey);
-                             found = true; return; 
+                             found = true; closeLoginModal(); return; 
                         }
                     }
                 }
@@ -433,7 +492,7 @@
                 if (schoolReg) {
                     if (schoolReg.username + schoolReg.password === inputLogin) {
                         setSession(currentSchoolId, 'school_admin', 'ADMIN TRƯỜNG', schoolReg.name, currentSchoolId);
-                        found = true; return;
+                        found = true; closeLoginModal(); return;
                     }
                 }
                 if (!found) { alert("Đăng nhập thất bại!"); return; }
@@ -441,20 +500,28 @@
                 const rootPass = snapshot.child('system_config/root_password').val() || "123456";
                 if (inputLogin === rootPass) {
                     setSession('root', 'root', 'ROOT ADMIN', currentSchoolName, null);
-                    found = true; return;
+                    found = true; closeLoginModal(); return;
                 }
                 const rootSubs = snapshot.child('subAccounts').val();
                 if (rootSubs) {
                     for (const [key, val] of Object.entries(rootSubs)) {
                         if (val.username + val.code === inputLogin) {
                             setSession('root', 'sub_account', val.username, currentSchoolName, key);
-                            found = true; return;
+                            found = true; closeLoginModal(); return;
                         }
                     }
                 }
                 if (!found) { alert("Đăng nhập thất bại!"); }
             }
         });
+    };
+
+    // Ham xoa thong tin dang nhap da luu
+    window.clearSavedLogin = function() {
+        localStorage.removeItem('savedLoginInfo');
+        document.getElementById('loginInput').value = '';
+        document.getElementById('rememberLogin').checked = false;
+        alert("Đã xóa thông tin đăng nhập đã lưu!");
     };
 
     function setSession(schoolId, role, username, schoolName, userKey) {
@@ -487,7 +554,7 @@
         document.querySelectorAll('.admin-only').forEach(el => el.style.display = isAdmin ? 'block' : 'none');
         document.querySelectorAll('.root-only').forEach(el => el.style.display = isRoot ? 'block' : 'none');
         
-        // Điền tên trường hiện tại vào ô nhập liệu
+        // Dien ten truong hien tai vao o nhap lieu
         document.getElementById("inputSchoolDisplayName").value = currentSchoolName;
 
         if (!isAdmin) {
@@ -505,7 +572,7 @@
         if (!name) { alert("Vui lòng nhập tên!"); return; }
 
         if (currentSchoolId === 'root') {
-             // Với Root, lưu vào system_config
+             // Voi Root, luu vao system_config
              update(ref(db, 'system_config'), { schoolName: name }).then(() => {
                  alert("Đã cập nhật tên trường (Root)!");
                  document.getElementById("headerSchoolName").innerText = name;
@@ -513,7 +580,7 @@
                  document.getElementById("userInfoDisplay").innerText = `User: ${currentUser} | ${currentSchoolName}`;
              });
         } else {
-             // Với trường thành phần, lưu vào schools_registry
+             // Voi truong thanh phan, luu vao schools_registry
              update(ref(db, `schools_registry/${currentSchoolId}`), { name: name }).then(() => {
                  alert("Đã cập nhật tên trường!");
                  document.getElementById("headerSchoolName").innerText = name;
@@ -542,7 +609,7 @@
         if (!viewDateStr && !isUserSelected) { viewDateStr = getMondayOfCurrentWeek(); document.getElementById("viewDate").value = viewDateStr; }
         const filterDate = document.getElementById("filterListDate").value;
         
-        // Sử dụng hàm format Local Time để lấy ngày hiện tại chính xác
+        // Su dung ham format Local Time de lay ngay hien tai chinh xac
         const todayStr = formatDateISO(new Date());
         
         onValue(ref(db, getDbPath('weekConfigs')), (snap) => {
@@ -587,7 +654,7 @@
 
             for (let i = 0; i < 7; i++) {
                 let d = new Date(start); d.setDate(start.getDate() + i); 
-                // Sử dụng hàm format Local Time cho vòng lặp
+                // Su dung ham format Local Time cho vong lap
                 let dk = formatDateISO(d);
                 
                 let dayStr = String(d.getDate()).padStart(2,'0');
@@ -606,7 +673,7 @@
                 if (renderMorning) {
                     mobileContent += `<div class="mobile-session-block"><span class="mobile-session-label">Buổi Sáng:</span>${renderMorning}</div>`;
                 }
-                // Thêm đường kẻ nếu có cả sáng và chiều
+                // Them duong ke neu co ca sang va chieu
                 if (renderMorning && renderAfternoon) {
                       mobileContent += `<hr class="mobile-separator">`;
                 }
@@ -652,7 +719,7 @@
     
     window.saveWeekConfig = () => {
         const startDate = document.getElementById("inputWeekStartDate").value; const weekNum = document.getElementById("inputWeekNum").value; const generalTask = document.getElementById("inputGeneralTask").value;
-        if (!startDate || !weekNum) { alert("Thiếu thông tin!"); return; }
+        if (!startDate || !weekNum) { alert("Thiếu thông tự!"); return; }
         update(ref(db, getDbPath(`weekConfigs/${startDate.replace(/-/g, "")}`)), { startDate, weekNum: parseInt(weekNum), generalTask }).then(() => { alert("Đã lưu!"); document.getElementById("inputWeekStartDate").value=""; });
     };
     window.deleteWeekConfig = (startDate) => { if(confirm("Xóa mốc này?")) remove(ref(db, getDbPath(`weekConfigs/${startDate.replace(/-/g, "")}`))); };
@@ -792,7 +859,7 @@
         
         if(!n||c.length<4){alert("Lỗi nhập!");return;} 
         
-        // Logic hiển thị: Luôn thêm chữ TRƯỜNG vào tên hiển thị nếu chưa có
+        // Logic hien thi: Luon them chu TRUONG vao ten hien thi neu chua co
         let displayName = n;
         if(!displayName.toUpperCase().startsWith("TRƯỜNG")) displayName = "TRƯỜNG "+displayName; 
         displayName = displayName.toUpperCase(); 
@@ -800,7 +867,7 @@
         if(k){ 
             update(ref(db,'schools_registry/'+k),{name:displayName,password:c}).then(()=>{alert("Cập nhật xong!");cancelSchoolEdit();}); 
         } else { 
-            // Logic User: Dùng chính cái tên nhập vào (n), không dùng displayName để tránh bị thêm chữ 'truong'
+            // Logic User: Dung chinh cai ten nhap vao (n), khong dung displayName de tranh bi them chu 'truong'
             const u=removeVietnameseTones(n); 
             
             get(ref(db,'schools_registry/'+u)).then(s=>{ 
