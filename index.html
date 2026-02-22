@@ -65,7 +65,7 @@
         .task-time { font-weight: bold; color: #000; }
         .task-person { font-style: italic; color: #555; margin-left: 4px; }
         
-        /* CHỨC NĂNG HIGHLIGHT (HOLD) */
+        /* CHỨC NĂNG HIGHLIGHT */
         .btn-highlight { user-select: none; display: none; }
         body.show-highlights .is-important-task {
             background-color: #ffeb3b !important;
@@ -171,7 +171,7 @@
                 </div>
             </div>
             <div class="col-md-7 text-end">
-                <button class="btn btn-warning me-2 btn-highlight no-print" id="btnHighlightTask" title="Nhấn và giữ để làm nổi bật"><i class="fas fa-star"></i> Highlight</button>
+                <button class="btn btn-warning me-2 btn-highlight no-print" id="btnHighlightTask" title="Bật/tắt chế độ làm nổi bật"><i class="fas fa-star"></i> Highlight</button>
                 <button class="btn btn-secondary me-2" onclick="window.print()"><i class="fas fa-print"></i> In Lịch</button>
                 <button class="btn btn-danger" onclick="toggleAdmin()"><i class="fas fa-user-lock"></i> Đăng nhập</button>
             </div>
@@ -374,7 +374,7 @@
       </div>
       <div class="modal-body">
         <div class="mb-3">
-          <label class="fw-bold">Thông tin đăng nhập [Tên][Mã]:</label>
+          <label class="fw-bold">Thông đăng nhập [Tên][Mã]:</label>
           <input type="password" id="loginInput" class="form-control" placeholder="Ví dụ: thptabc1234" autocomplete="new-password" readonly onfocus="this.removeAttribute('readonly');">
         </div>
         <div class="form-check mb-3">
@@ -946,21 +946,12 @@
     const originalSwitchTab = window.switchTab;
     window.switchTab = function(n) { originalSwitchTab(n); if(n==='accounts') loadSubAccounts(); }
 
-    // XỬ LÝ SỰ KIỆN NÚT HIGHLIGHT (NHẤN GIỮ / HOLD)
+    // XU LY SU KIEN NUT HIGHLIGHT (CLICK TOGGLE)
     const btnHighlightTask = document.getElementById("btnHighlightTask");
     if (btnHighlightTask) {
-        const startHighlight = () => document.body.classList.add("show-highlights");
-        const endHighlight = () => document.body.classList.remove("show-highlights");
-
-        // Dành cho chuột (Máy tính)
-        btnHighlightTask.addEventListener('mousedown', startHighlight);
-        btnHighlightTask.addEventListener('mouseup', endHighlight);
-        btnHighlightTask.addEventListener('mouseleave', endHighlight);
-        
-        // Dành cho chạm (Điện thoại)
-        btnHighlightTask.addEventListener('touchstart', (e) => { e.preventDefault(); startHighlight(); });
-        btnHighlightTask.addEventListener('touchend', endHighlight);
-        btnHighlightTask.addEventListener('touchcancel', endHighlight);
+        btnHighlightTask.addEventListener('click', () => {
+            document.body.classList.toggle("show-highlights");
+        });
     }
 </script>
 </body>
