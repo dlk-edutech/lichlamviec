@@ -65,6 +65,17 @@
         .task-time { font-weight: bold; color: #000; }
         .task-person { font-style: italic; color: #555; margin-left: 4px; }
         
+        /* CHỨC NĂNG HIGHLIGHT (HOLD) */
+        .btn-highlight { user-select: none; display: none; }
+        body.show-highlights .is-important-task {
+            background-color: #ffeb3b !important;
+            border: 1px solid #f44336;
+            border-radius: 4px;
+            padding: 4px;
+            transition: background-color 0.2s;
+            color: #b71c1c;
+        }
+
         /* CSS CHO MOBILE */
         td.mobile-cell-container { padding: 0 !important; }
 
@@ -160,6 +171,7 @@
                 </div>
             </div>
             <div class="col-md-7 text-end">
+                <button class="btn btn-warning me-2 btn-highlight no-print" id="btnHighlightTask" title="Nhấn và giữ để làm nổi bật"><i class="fas fa-star"></i> Highlight</button>
                 <button class="btn btn-secondary me-2" onclick="window.print()"><i class="fas fa-print"></i> In Lịch</button>
                 <button class="btn btn-danger" onclick="toggleAdmin()"><i class="fas fa-user-lock"></i> Đăng nhập</button>
             </div>
@@ -217,6 +229,14 @@
                 <div class="col-md-3"><label class="fw-bold">Giờ:</label><input type="text" id="inputTime" class="form-control"></div>
                 <div class="col-md-3"><label class="fw-bold">Người thực hiện:</label><input type="text" id="inputPerson" class="form-control"></div>
                 <div class="col-12"><label class="fw-bold">Nội dung công việc:</label><input type="text" id="inputContent" class="form-control"></div>
+                
+                <div class="col-12 mt-2">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="inputImportant">
+                        <label class="form-check-label text-danger fw-bold" for="inputImportant"><i class="fas fa-exclamation-circle"></i> Đánh dấu việc cần lưu ý</label>
+                    </div>
+                </div>
+
                 <div class="col-12 text-center mt-3">
                     <button id="btnSaveManual" class="btn btn-success px-5" onclick="addSchedule()">LƯU DỮ LIỆU</button>
                     <button id="btnCancelEdit" class="btn btn-secondary px-4" style="display:none" onclick="cancelEdit()">HỦY</button>
@@ -260,7 +280,7 @@
             </div>
             <div class="table-responsive" style="max-height: 450px;">
                 <table class="table table-sm table-bordered">
-                    <thead class="table-dark"><tr><th>Ngày</th><th>Buổi</th><th>Giờ</th><th>Nội dung</th><th>Người thực hiện</th><th>Thao tác</th></tr></thead>
+                    <thead class="table-dark"><tr><th>Ngày</th><th>Buổi</th><th>Giờ</th><th>Nội dung</th><th>Người thực hiện</th><th>Lưu ý</th><th>Thao tác</th></tr></thead>
                     <tbody id="manageTableBody"></tbody>
                 </table>
             </div>
@@ -331,6 +351,10 @@
         <div class="mb-3">
             <label class="fw-bold">Người thực hiện:</label>
             <input type="text" id="modalPerson" class="form-control">
+        </div>
+        <div class="mb-3 form-check">
+            <input class="form-check-input" type="checkbox" id="modalImportant">
+            <label class="form-check-label text-danger fw-bold" for="modalImportant"><i class="fas fa-exclamation-circle"></i> Đánh dấu việc cần lưu ý</label>
         </div>
       </div>
       <div class="modal-footer">
@@ -637,6 +661,13 @@
             const allData = []; snapshot.forEach(child => { let v = child.val(); v.key = child.key; allData.push(v); });
             const listData = filterDate ? allData.filter(i => i.date === filterDate) : allData;
             
+            // Xử lý hiển thị/ẩn nút Highlight tùy vào việc có dữ liệu được mark hay không
+            const hasImportant = listData.some(t => t.isImportant);
+            const btnHL = document.getElementById("btnHighlightTask");
+            if (btnHL) {
+                btnHL.style.display = hasImportant ? "inline-block" : "none";
+            }
+
             const sortedList = listData.sort((a,b) => {
                 const d = new Date(a.date) - new Date(b.date);
                 if (d !== 0) return d;
@@ -645,7 +676,7 @@
                 return t1.localeCompare(t2);
             });
 
-            document.getElementById("manageTableBody").innerHTML = sortedList.map(item => `<tr><td>${item.date}</td><td>${item.session}</td><td>${item.time||''}</td><td>${item.content}</td><td>${item.person||''}</td><td><button class="btn btn-xs btn-primary" onclick="editItem('${item.key}','${item.date}','${item.session}','${item.time}','${item.content}','${item.person}')">Sửa</button> <button class="btn btn-xs btn-danger" onclick="deleteItem('${item.key}')">Xóa</button></td></tr>`).join("");
+            document.getElementById("manageTableBody").innerHTML = sortedList.map(item => `<tr><td>${item.date}</td><td>${item.session}</td><td>${item.time||''}</td><td>${item.content}</td><td>${item.person||''}</td><td>${item.isImportant ? '<span class="text-danger fw-bold"><i class="fas fa-star"></i> Có</span>' : ''}</td><td><button class="btn btn-xs btn-primary" onclick="editItem('${item.key}','${item.date}','${item.session}','${item.time}','${item.content}','${item.person}', ${item.isImportant ? true : false})">Sửa</button> <button class="btn btn-xs btn-danger" onclick="deleteItem('${item.key}')">Xóa</button></td></tr>`).join("");
             
             let html = ""; let start = new Date(viewDateStr);
             
@@ -709,7 +740,10 @@
             const t1 = (a.time || '23:59').padStart(5, '0');
             const t2 = (b.time || '23:59').padStart(5, '0');
             return t1.localeCompare(t2);
-        }).map(t => `<div class="task-item"><i class="fas fa-circle task-bullet"></i><div class="task-content-wrapper"><b>${t.time?t.time+':':''}</b> ${t.content} <i>${t.person?'('+t.person+')':''}</i></div></div>`).join(""); 
+        }).map(t => {
+            const impClass = t.isImportant ? 'is-important-task' : '';
+            return `<div class="task-item ${impClass}"><i class="fas fa-circle task-bullet"></i><div class="task-content-wrapper"><b>${t.time?t.time+':':''}</b> ${t.content} <i>${t.person?'('+t.person+')':''}</i></div></div>`;
+        }).join(""); 
     }
 
     window.switchTab = (n) => {
@@ -761,7 +795,7 @@
                 if(rd&&ct){ 
                     const validDate = parseFlexibleDate(rd);
                     if(validDate) {
-                        push(ref(db, getDbPath('schedules')), {date:validDate, session:s, time:t, content:ct, person:p, creator:currentUser+"(Excel)"}); 
+                        push(ref(db, getDbPath('schedules')), {date:validDate, session:s, time:t, content:ct, person:p, isImportant: false, creator:currentUser+"(Excel)"}); 
                         c++; 
                     }
                 } 
@@ -818,16 +852,36 @@
 
     window.removeAcc = (k) => confirm("Xóa?") && remove(ref(db, getDbPath(`subAccounts/${k}`)));
     
-    window.addSchedule = () => { const d={date:document.getElementById("inputDate").value, session:document.getElementById("inputSession").value, time:document.getElementById("inputTime").value, content:document.getElementById("inputContent").value, person:document.getElementById("inputPerson").value, creator:currentUser}; const k=document.getElementById("editKey").value; if(k) update(ref(db, getDbPath('schedules/'+k)), d).then(cancelEdit); else push(ref(db, getDbPath('schedules')), d).then(cancelEdit); };
-    window.cancelEdit = () => { document.getElementById("editKey").value=""; document.getElementById("inputContent").value=""; loadSchedule(); };
+    window.addSchedule = () => { 
+        const d = {
+            date: document.getElementById("inputDate").value, 
+            session: document.getElementById("inputSession").value, 
+            time: document.getElementById("inputTime").value, 
+            content: document.getElementById("inputContent").value, 
+            person: document.getElementById("inputPerson").value, 
+            isImportant: document.getElementById("inputImportant").checked,
+            creator: currentUser
+        }; 
+        const k = document.getElementById("editKey").value; 
+        if(k) update(ref(db, getDbPath('schedules/'+k)), d).then(cancelEdit); 
+        else push(ref(db, getDbPath('schedules')), d).then(cancelEdit); 
+    };
+
+    window.cancelEdit = () => { 
+        document.getElementById("editKey").value=""; 
+        document.getElementById("inputContent").value=""; 
+        document.getElementById("inputImportant").checked = false;
+        loadSchedule(); 
+    };
     
-    window.editItem = (k,d,s,t,c,p) => { 
+    window.editItem = (k,d,s,t,c,p, isImp) => { 
         document.getElementById("modalKey").value = k;
         document.getElementById("modalDate").value = d;
         document.getElementById("modalSession").value = s;
         document.getElementById("modalTime").value = t;
         document.getElementById("modalContent").value = c;
         document.getElementById("modalPerson").value = p;
+        document.getElementById("modalImportant").checked = (isImp === true || isImp === 'true');
         const myModal = new bootstrap.Modal(document.getElementById('editModal'));
         myModal.show();
     };
@@ -840,6 +894,7 @@
             time: document.getElementById("modalTime").value,
             content: document.getElementById("modalContent").value,
             person: document.getElementById("modalPerson").value,
+            isImportant: document.getElementById("modalImportant").checked,
             creator: currentUser + " (Edited)"
         };
         update(ref(db, getDbPath('schedules/'+k)), d).then(() => {
@@ -890,6 +945,23 @@
     checkUrlParams();
     const originalSwitchTab = window.switchTab;
     window.switchTab = function(n) { originalSwitchTab(n); if(n==='accounts') loadSubAccounts(); }
+
+    // XỬ LÝ SỰ KIỆN NÚT HIGHLIGHT (NHẤN GIỮ / HOLD)
+    const btnHighlightTask = document.getElementById("btnHighlightTask");
+    if (btnHighlightTask) {
+        const startHighlight = () => document.body.classList.add("show-highlights");
+        const endHighlight = () => document.body.classList.remove("show-highlights");
+
+        // Dành cho chuột (Máy tính)
+        btnHighlightTask.addEventListener('mousedown', startHighlight);
+        btnHighlightTask.addEventListener('mouseup', endHighlight);
+        btnHighlightTask.addEventListener('mouseleave', endHighlight);
+        
+        // Dành cho chạm (Điện thoại)
+        btnHighlightTask.addEventListener('touchstart', (e) => { e.preventDefault(); startHighlight(); });
+        btnHighlightTask.addEventListener('touchend', endHighlight);
+        btnHighlightTask.addEventListener('touchcancel', endHighlight);
+    }
 </script>
 </body>
 </html>
