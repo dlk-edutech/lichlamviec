@@ -214,7 +214,7 @@
                 <input type="hidden" id="editKey">
                 <div class="col-md-3"><label class="fw-bold">Ngày:</label><input type="date" id="inputDate" class="form-control"></div>
                 <div class="col-md-3"><label class="fw-bold">Buổi:</label><select id="inputSession" class="form-select"><option value="Sáng">Buổi Sáng</option><option value="Chiều">Buổi Chiều</option></select></div>
-                <div class="col-md-3"><label class="fw-bold">Giờ:</label><input type="text" id="inputTime" class="form-control" placeholder="07:00"></div>
+                <div class="col-md-3"><label class="fw-bold">Giờ:</label><input type="text" id="inputTime" class="form-control"</div>
                 <div class="col-md-3"><label class="fw-bold">Người thực hiện:</label><input type="text" id="inputPerson" class="form-control"></div>
                 <div class="col-12"><label class="fw-bold">Nội dung công việc:</label><input type="text" id="inputContent" class="form-control"></div>
                 <div class="col-12 text-center mt-3">
@@ -719,7 +719,7 @@
     
     window.saveWeekConfig = () => {
         const startDate = document.getElementById("inputWeekStartDate").value; const weekNum = document.getElementById("inputWeekNum").value; const generalTask = document.getElementById("inputGeneralTask").value;
-        if (!startDate || !weekNum) { alert("Thiếu thông tự!"); return; }
+        if (!startDate || !weekNum) { alert("Thiếu thông tin!"); return; }
         update(ref(db, getDbPath(`weekConfigs/${startDate.replace(/-/g, "")}`)), { startDate, weekNum: parseInt(weekNum), generalTask }).then(() => { alert("Đã lưu!"); document.getElementById("inputWeekStartDate").value=""; });
     };
     window.deleteWeekConfig = (startDate) => { if(confirm("Xóa mốc này?")) remove(ref(db, getDbPath(`weekConfigs/${startDate.replace(/-/g, "")}`))); };
