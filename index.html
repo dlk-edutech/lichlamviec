@@ -211,10 +211,14 @@
             <div class="card card-body bg-light mb-3">
                 <h6 class="fw-bold text-primary"><i class="fas fa-cogs"></i> THIẾT LẬP MỐC TUẦN & NỘI DUNG CHUNG</h6>
                 <div class="row g-2 align-items-end">
+                    <input type="hidden" id="editWeekConfigKey">
                     <div class="col-md-3"><label class="small fw-bold">Ngày bắt đầu áp dụng (Thứ 2):</label><input type="date" id="inputWeekStartDate" class="form-control"></div>
                     <div class="col-md-2"><label class="small fw-bold">Là Tuần thứ:</label><input type="number" id="inputWeekNum" class="form-control" placeholder="VD: 1"></div>
-                    <div class="col-md-5"><label class="small fw-bold">Nội dung chung:</label><input type="text" id="inputGeneralTask" class="form-control" placeholder="VD: LỊCH HỌC KỲ II..."></div>
-                    <div class="col-md-2"><button class="btn btn-primary fw-bold w-100" onclick="saveWeekConfig()">LƯU MỐC MỚI</button></div>
+                    <div class="col-md-4"><label class="small fw-bold">Nội dung chung:</label><input type="text" id="inputGeneralTask" class="form-control" placeholder="VD: LỊCH HỌC KỲ II..."></div>
+                    <div class="col-md-3 d-flex gap-1">
+                        <button id="btnSaveWeekConfig" class="btn btn-primary fw-bold w-100" onclick="saveWeekConfig()">LƯU MỐC MỚI</button>
+                        <button id="btnCancelWeekConfig" class="btn btn-secondary fw-bold w-100" onclick="cancelWeekConfig()" style="display:none;">HỦY</button>
+                    </div>
                 </div>
             </div>
             <h6 class="fw-bold mt-3">DANH SÁCH CÁC MỐC ĐÃ LƯU</h6>
@@ -640,7 +644,10 @@
             const configs = []; snap.forEach(child => { configs.push(child.val()); });
             configs.sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
             if(document.getElementById("weekConfigsBody")){
-                let htmlConfig = configs.map(c => `<tr><td>${c.startDate}</td><td>${c.weekNum}</td><td>${c.generalTask}</td><td><button class="btn btn-xs btn-danger" onclick="deleteWeekConfig('${c.startDate}')">Xóa</button></td></tr>`).join("");
+                let htmlConfig = configs.map(c => {
+                    const escapedTask = (c.generalTask || '').replace(/'/g, "\\'").replace(/"/g, "&quot;");
+                    return `<tr><td>${c.startDate}</td><td>${c.weekNum}</td><td>${c.generalTask || ''}</td><td><button class="btn btn-sm btn-warning me-1" onclick="editWeekConfig('${c.startDate}', '${c.weekNum}', '${escapedTask}')">Sửa</button><button class="btn btn-sm btn-danger" onclick="deleteWeekConfig('${c.startDate}')">Xóa</button></td></tr>`;
+                }).join("");
                 document.getElementById("weekConfigsBody").innerHTML = htmlConfig;
             }
             const viewDate = new Date(viewDateStr); let activeConfig = null;
@@ -751,11 +758,46 @@
         document.querySelectorAll('#adminTabs .nav-link').forEach(l => l.classList.toggle('active', l.innerText.toLowerCase().includes(n === 'schools' ? 'quản lý trường' : (n === 'excel' ? 'excel' : (n === 'list' ? 'dữ liệu' : (n === 'accounts' ? 'tài khoản' : (n === 'general' ? 'chung' : 'nhập lịch')))))));
     };
     
+    // Them tinh nang Sua moc da luu
     window.saveWeekConfig = () => {
-        const startDate = document.getElementById("inputWeekStartDate").value; const weekNum = document.getElementById("inputWeekNum").value; const generalTask = document.getElementById("inputGeneralTask").value;
+        const startDate = document.getElementById("inputWeekStartDate").value;
+        const weekNum = document.getElementById("inputWeekNum").value;
+        const generalTask = document.getElementById("inputGeneralTask").value;
+        const oldKey = document.getElementById("editWeekConfigKey").value;
+        
         if (!startDate || !weekNum) { alert("Thiếu thông tin!"); return; }
-        update(ref(db, getDbPath(`weekConfigs/${startDate.replace(/-/g, "")}`)), { startDate, weekNum: parseInt(weekNum), generalTask }).then(() => { alert("Đã lưu!"); document.getElementById("inputWeekStartDate").value=""; });
+        
+        const newKey = startDate.replace(/-/g, "");
+        
+        // Neu ngay thay doi trong luc sua, xoa du lieu cu
+        if (oldKey && oldKey !== newKey) {
+            remove(ref(db, getDbPath(`weekConfigs/${oldKey}`)));
+        }
+
+        update(ref(db, getDbPath(`weekConfigs/${newKey}`)), { startDate, weekNum: parseInt(weekNum), generalTask }).then(() => { 
+            alert("Đã lưu!"); 
+            cancelWeekConfig();
+        });
     };
+
+    window.editWeekConfig = (ngay, tuan, noidung) => {
+        document.getElementById("inputWeekStartDate").value = ngay;
+        document.getElementById("inputWeekNum").value = tuan;
+        document.getElementById("inputGeneralTask").value = noidung;
+        document.getElementById("editWeekConfigKey").value = ngay.replace(/-/g, "");
+        document.getElementById("btnSaveWeekConfig").innerText = "CẬP NHẬT";
+        document.getElementById("btnCancelWeekConfig").style.display = "block";
+    };
+
+    window.cancelWeekConfig = () => {
+        document.getElementById("inputWeekStartDate").value = "";
+        document.getElementById("inputWeekNum").value = "";
+        document.getElementById("inputGeneralTask").value = "";
+        document.getElementById("editWeekConfigKey").value = "";
+        document.getElementById("btnSaveWeekConfig").innerText = "LƯU MỐC MỚI";
+        document.getElementById("btnCancelWeekConfig").style.display = "none";
+    };
+
     window.deleteWeekConfig = (startDate) => { if(confirm("Xóa mốc này?")) remove(ref(db, getDbPath(`weekConfigs/${startDate.replace(/-/g, "")}`))); };
 
     window.deleteAllSchedule = async () => {
@@ -776,7 +818,7 @@
             }
         }
         if (isAuth) { remove(ref(db, getDbPath('schedules'))).then(() => alert("Đã xóa sạch!")).catch(e => alert("Lỗi: "+e)); } 
-        else { alert("Thông tin xác nhận KHÔNG ĐÚNG!"); }
+        else { alert("Thông nhận KHÔNG ĐÚNG!"); }
     };
 
     window.processExcelImport = () => { 
