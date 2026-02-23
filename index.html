@@ -419,7 +419,7 @@
         return str.toLowerCase().replace(/\s+/g, '');
     }
 
-    // Ham lay ngay chuan (Local Time) de tranh loi UTC
+    // ham lay ngay chuan (local time) de tranh loi utc
     function formatDateISO(date) {
         const y = date.getFullYear();
         const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -452,7 +452,7 @@
                 window.location.href = window.location.pathname;
             }
         } else { 
-            // Neu la Root, thu lay ten truong tu system_config neu co
+            // neu la root, thu lay ten truong tu system_config neu co
             get(ref(db, 'system_config/schoolName')).then(snap => {
                 if(snap.exists()) {
                      currentSchoolName = snap.val();
@@ -464,7 +464,7 @@
         }
     }
 
-    // Ham hien thi modal dang nhap va doc data tu localStorage
+    // ham hien thi modal dang nhap va doc data tu localstorage
     window.toggleAdmin = function() {
         const savedInfo = localStorage.getItem('savedLoginInfo');
         const loginInput = document.getElementById('loginInput');
@@ -482,7 +482,7 @@
         myModal.show();
     };
 
-    // Ham thuc thi dang nhap
+    // ham thuc thi dang nhap
     window.executeLogin = function() {
         const inputLogin = document.getElementById('loginInput').value.trim();
         if (!inputLogin) { alert("Vui lòng nhập thông tin!"); return; }
@@ -544,7 +544,7 @@
         });
     };
 
-    // Ham xoa thong tin dang nhap da luu
+    // ham xoa thong tin dang nhap da luu
     window.clearSavedLogin = function() {
         localStorage.removeItem('savedLoginInfo');
         document.getElementById('loginInput').value = '';
@@ -582,7 +582,7 @@
         document.querySelectorAll('.admin-only').forEach(el => el.style.display = isAdmin ? 'block' : 'none');
         document.querySelectorAll('.root-only').forEach(el => el.style.display = isRoot ? 'block' : 'none');
         
-        // Dien ten truong hien tai vao o nhap lieu
+        // dien ten truong hien tai vao o nhap lieu
         document.getElementById("inputSchoolDisplayName").value = currentSchoolName;
 
         if (!isAdmin) {
@@ -600,7 +600,7 @@
         if (!name) { alert("Vui lòng nhập tên!"); return; }
 
         if (currentSchoolId === 'root') {
-             // Voi Root, luu vao system_config
+             // voi root, luu vao system_config
              update(ref(db, 'system_config'), { schoolName: name }).then(() => {
                  alert("Đã cập nhật tên trường (Root)!");
                  document.getElementById("headerSchoolName").innerText = name;
@@ -608,7 +608,7 @@
                  document.getElementById("userInfoDisplay").innerText = `User: ${currentUser} | ${currentSchoolName}`;
              });
         } else {
-             // Voi truong thanh phan, luu vao schools_registry
+             // voi truong thanh phan, luu vao schools_registry
              update(ref(db, `schools_registry/${currentSchoolId}`), { name: name }).then(() => {
                  alert("Đã cập nhật tên trường!");
                  document.getElementById("headerSchoolName").innerText = name;
@@ -637,7 +637,7 @@
         if (!viewDateStr && !isUserSelected) { viewDateStr = getMondayOfCurrentWeek(); document.getElementById("viewDate").value = viewDateStr; }
         const filterDate = document.getElementById("filterListDate").value;
         
-        // Su dung ham format Local Time de lay ngay hien tai chinh xac
+        // su dung ham format local time de lay ngay hien tai chinh xac
         const todayStr = formatDateISO(new Date());
         
         onValue(ref(db, getDbPath('weekConfigs')), (snap) => {
@@ -668,7 +668,7 @@
             const allData = []; snapshot.forEach(child => { let v = child.val(); v.key = child.key; allData.push(v); });
             const listData = filterDate ? allData.filter(i => i.date === filterDate) : allData;
             
-            // Xử lý hiển thị/ẩn nút Highlight tùy vào việc có dữ liệu được mark hay không
+            // xu ly hien thi/an nut highlight tuy vao viec co du lieu duoc mark hay khong
             const hasImportant = listData.some(t => t.isImportant);
             const btnHL = document.getElementById("btnHighlightTask");
             if (btnHL) {
@@ -692,7 +692,7 @@
 
             for (let i = 0; i < 7; i++) {
                 let d = new Date(start); d.setDate(start.getDate() + i); 
-                // Su dung ham format Local Time cho vong lap
+                // su dung ham format local time cho vong lap
                 let dk = formatDateISO(d);
                 
                 let dayStr = String(d.getDate()).padStart(2,'0');
@@ -711,7 +711,7 @@
                 if (renderMorning) {
                     mobileContent += `<div class="mobile-session-block"><span class="mobile-session-label">Buổi Sáng:</span>${renderMorning}</div>`;
                 }
-                // Them duong ke neu co ca sang va chieu
+                // them duong ke neu co ca sang va chieu
                 if (renderMorning && renderAfternoon) {
                       mobileContent += `<hr class="mobile-separator">`;
                 }
@@ -758,7 +758,7 @@
         document.querySelectorAll('#adminTabs .nav-link').forEach(l => l.classList.toggle('active', l.innerText.toLowerCase().includes(n === 'schools' ? 'quản lý trường' : (n === 'excel' ? 'excel' : (n === 'list' ? 'dữ liệu' : (n === 'accounts' ? 'tài khoản' : (n === 'general' ? 'chung' : 'nhập lịch')))))));
     };
     
-    // Them tinh nang Sua moc da luu
+    // them tinh nang sua moc da luu
     window.saveWeekConfig = () => {
         const startDate = document.getElementById("inputWeekStartDate").value;
         const weekNum = document.getElementById("inputWeekNum").value;
@@ -769,7 +769,7 @@
         
         const newKey = startDate.replace(/-/g, "");
         
-        // Neu ngay thay doi trong luc sua, xoa du lieu cu
+        // neu ngay thay doi trong luc sua, xoa du lieu cu
         if (oldKey && oldKey !== newKey) {
             remove(ref(db, getDbPath(`weekConfigs/${oldKey}`)));
         }
@@ -956,7 +956,7 @@
         
         if(!n||c.length<4){alert("Lỗi nhập!");return;} 
         
-        // Logic hien thi: Luon them chu TRUONG vao ten hien thi neu chua co
+        // logic hien thi: luon them chu truong vao ten hien thi neu chua co
         let displayName = n;
         if(!displayName.toUpperCase().startsWith("TRƯỜNG")) displayName = "TRƯỜNG "+displayName; 
         displayName = displayName.toUpperCase(); 
@@ -964,7 +964,7 @@
         if(k){ 
             update(ref(db,'schools_registry/'+k),{name:displayName,password:c}).then(()=>{alert("Cập nhật xong!");cancelSchoolEdit();}); 
         } else { 
-            // Logic User: Dung chinh cai ten nhap vao (n), khong dung displayName de tranh bi them chu 'truong'
+            // logic user: dung chinh cai ten nhap vao (n), khong dung displayname de tranh bi them chu 'truong'
             const u=removeVietnameseTones(n); 
             
             get(ref(db,'schools_registry/'+u)).then(s=>{ 
@@ -980,7 +980,7 @@
     };
     window.startEditSchool = (u,n,p) => { document.getElementById("editingSchoolKey").value=u; document.getElementById("newSchoolName").value=n; document.getElementById("newSchoolCode").value=p; document.getElementById("schoolFormTitle").innerText="CẬP NHẬT TRƯỜNG"; document.getElementById("btnSaveSchool").innerText="CẬP NHẬT"; document.getElementById("btnCancelSchoolEdit").style.display="block"; };
     window.cancelSchoolEdit = () => { document.getElementById("editingSchoolKey").value=""; document.getElementById("newSchoolName").value=""; document.getElementById("newSchoolCode").value="1234"; document.getElementById("schoolFormTitle").innerText="TẠO TRƯỜNG MỚI"; document.getElementById("btnSaveSchool").innerText="TẠO NGAY"; document.getElementById("btnCancelSchoolEdit").style.display="none"; };
-    window.deleteSchool = (u) => { if(!confirm("Xóa vĩnh viễn trường này?"))return; const p=prompt("Mật khẩu ROOT:"); if(p!=='123456'){alert("Sai mật khẩu!");return;} remove(ref(db,'schools_registry/'+u)); remove(ref(db,'schools_data/'+u)); alert("Đã xóa!"); };
+    window.deleteSchool = async (u) => { if(!confirm("Xóa vĩnh viễn trường này?"))return; const p=prompt("Mật khẩu ROOT:"); const snap = await get(ref(db, 'system_config/root_password')); const rootPass = snap.val() || "123456"; if(p!==rootPass){alert("Sai mật khẩu!");return;} remove(ref(db,'schools_registry/'+u)); remove(ref(db,'schools_data/'+u)); alert("Đã xóa!"); };
     window.copyLink = (u) => { const l=window.location.origin+window.location.pathname+"?school="+u; navigator.clipboard.writeText(l).then(()=>alert("Đã copy: "+l)); };
     function loadSchoolsList() { onValue(ref(db,'schools_registry'),s=>{ let h=""; s.forEach(c=>{ const v=c.val(); h+=`<tr><td>${v.name}</td><td>${v.username}</td><td>${v.password}</td><td><button class="btn btn-sm btn-info" onclick="copyLink('${v.username}')">Link</button></td><td><button class="btn btn-sm btn-warning" onclick="startEditSchool('${v.username}','${v.name}','${v.password}')">Sửa</button> <button class="btn btn-sm btn-danger" onclick="deleteSchool('${v.username}')">Xóa</button></td></tr>`; }); document.getElementById("schoolsListBody").innerHTML=h; }); }
 
@@ -988,7 +988,7 @@
     const originalSwitchTab = window.switchTab;
     window.switchTab = function(n) { originalSwitchTab(n); if(n==='accounts') loadSubAccounts(); }
 
-    // XU LY SU KIEN NUT HIGHLIGHT (CLICK TOGGLE)
+    // xu ly su kien nut highlight (click toggle)
     const btnHighlightTask = document.getElementById("btnHighlightTask");
     if (btnHighlightTask) {
         btnHighlightTask.addEventListener('click', () => {
