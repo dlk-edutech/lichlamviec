@@ -129,7 +129,7 @@
 <div class="container">
     <div class="header-top">
         <div class="header-left">
-            <h4>SỞ GIÁO DỤC VÀ ĐÀO TẠO ĐẮK LẮK</h4>
+            <h4 id="headerCoQuan">SỞ GIÁO DỤC VÀ ĐÀO TẠO ĐẮK LẮK</h4>
             <h5 id="headerSchoolName">TRƯỜNG THPT SỐ 1 TRẦN PHÚ</h5>
             <div class="header-asterisk">***</div>
         </div>
@@ -199,13 +199,23 @@
 
         <div id="tabGeneral">
             <div class="card card-body bg-light mb-3">
+                <h6 class="fw-bold text-success"><i class="fas fa-building"></i> CẬP NHẬT CƠ QUAN CHỦ QUẢN</h6>
+                <div class="input-group">
+                    <span class="input-group-text fw-bold">Tên cơ quan:</span>
+                    <input type="text" id="inputCoQuan" class="form-control" placeholder="VD: SỞ GIÁO DỤC VÀ ĐÀO TẠO...">
+                    <button class="btn btn-success" onclick="saveCoQuan()">LƯU CƠ QUAN</button>
+                </div>
+                <div class="small text-muted mt-1"><i>* Tên này sẽ hiện ở dòng chữ đen phía trên cùng.</i></div>
+            </div>
+
+            <div class="card card-body bg-light mb-3">
                 <h6 class="fw-bold text-danger"><i class="fas fa-university"></i> CẬP NHẬT TÊN TRƯỜNG</h6>
                 <div class="input-group">
                     <span class="input-group-text fw-bold">Tên hiển thị:</span>
                     <input type="text" id="inputSchoolDisplayName" class="form-control" placeholder="VD: TRƯỜNG THPT ...">
                     <button class="btn btn-danger" onclick="saveSchoolDisplayName()">LƯU TÊN</button>
                 </div>
-                <div class="small text-muted mt-1"><i>* Tên này sẽ hiện ở dòng chữ đỏ phía trên.</i></div>
+                <div class="small text-muted mt-1"><i>* Tên này sẽ hiện ở dòng chữ đỏ bên dưới cơ quan chủ quản.</i></div>
             </div>
 
             <div class="card card-body bg-light mb-3">
@@ -407,6 +417,7 @@
 
     let currentUser = null; let currentRole = null; 
     let currentSchoolId = 'root'; let currentSchoolName = 'TRƯỜNG THPT SỐ 1 TRẦN PHÚ';
+    let currentCoQuan = 'SỞ GIÁO DỤC VÀ ĐÀO TẠO ĐẮK LẮK';
     let currentUserKey = null;
 
     function removeVietnameseTones(str) {
@@ -444,7 +455,9 @@
             if (snapshot.exists()) {
                 const schoolData = snapshot.val();
                 currentSchoolId = schoolParam; currentSchoolName = schoolData.name;
+                currentCoQuan = schoolData.coQuanChuQuan || 'SỞ GIÁO DỤC VÀ ĐÀO TẠO ĐẮK LẮK';
                 document.getElementById('headerSchoolName').innerText = currentSchoolName;
+                document.getElementById('headerCoQuan').innerText = currentCoQuan;
                 document.getElementById('excelTargetSchool').innerText = currentSchoolName;
                 loadSchedule();
             } else {
@@ -458,6 +471,12 @@
                      currentSchoolName = snap.val();
                      document.getElementById('headerSchoolName').innerText = currentSchoolName;
                      document.getElementById('excelTargetSchool').innerText = currentSchoolName;
+                }
+            });
+            get(ref(db, 'system_config/coQuanChuQuan')).then(snap => {
+                if(snap.exists()) {
+                     currentCoQuan = snap.val();
+                     document.getElementById('headerCoQuan').innerText = currentCoQuan;
                 }
             });
             loadSchedule(); 
@@ -584,6 +603,7 @@
         
         // dien ten truong hien tai vao o nhap lieu
         document.getElementById("inputSchoolDisplayName").value = currentSchoolName;
+        document.getElementById("inputCoQuan").value = currentCoQuan;
 
         if (!isAdmin) {
             document.getElementById('tabGeneral').style.display = 'none';
@@ -593,6 +613,26 @@
         }
         if (isRoot) loadSchoolsList();
     }
+
+    window.saveCoQuan = () => {
+        if (!['root', 'school_admin'].includes(currentRole)) return;
+        const name = document.getElementById("inputCoQuan").value.trim();
+        if (!name) { alert("Vui lòng nhập tên cơ quan chủ quản!"); return; }
+
+        if (currentSchoolId === 'root') {
+             update(ref(db, 'system_config'), { coQuanChuQuan: name }).then(() => {
+                 alert("Đã cập nhật cơ quan chủ quản (Root)!");
+                 document.getElementById("headerCoQuan").innerText = name;
+                 currentCoQuan = name;
+             });
+        } else {
+             update(ref(db, `schools_registry/${currentSchoolId}`), { coQuanChuQuan: name }).then(() => {
+                 alert("Đã cập nhật cơ quan chủ quản!");
+                 document.getElementById("headerCoQuan").innerText = name;
+                 currentCoQuan = name;
+             });
+        }
+    };
 
     window.saveSchoolDisplayName = () => {
         if (!['root', 'school_admin'].includes(currentRole)) return;
