@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ebook - Hướng dẫn sử dụng Lịch công tác</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8f9fa; color: #333; position: relative; }
+        
+        /* Sidebar Mục lục */
+        #sidebar { position: fixed; top: 0; left: 0; height: 100vh; width: 300px; background: #fff; border-right: 1px solid #dee2e6; overflow-y: auto; padding: 20px; z-index: 1000; box-shadow: 2px 0 5px rgba(0,0,0,0.05); }
+        
+        /* CSS cho Menu Cha (Chương) */
+        #sidebar .nav-link { color: #444; font-weight: 600; padding: 10px 15px; border-radius: 5px; margin-bottom: 2px; transition: all 0.2s; font-size: 1rem; display: flex; justify-content: space-between; align-items: center; }
+        #sidebar .nav-link:hover { background-color: #e3f2fd; color: #0d6efd; }
+        #sidebar .nav-link.active-chapter { background-color: #e3f2fd; color: #0d6efd; font-weight: bold; }
+        
+        /* Hiệu ứng mũi tên xổ xuống */
+        #sidebar .nav-link .fa-chevron-right { transition: transform 0.3s ease; font-size: 0.8rem; color: #888; }
+        #sidebar .nav-link.active-chapter .fa-chevron-right { transform: rotate(90deg); color: #0d6efd; }
+        
+        /* CSS cho Menu Con (Mục nhỏ) */
+        .sub-menu { display: none; margin-bottom: 5px; }
+        #sidebar .sub-menu .nav-link { font-size: 0.9rem; font-weight: 400; padding: 8px 15px; margin-left: 10px; border-left: 2px solid #eee; border-radius: 0; color: #6c757d; }
+        #sidebar .sub-menu .nav-link:hover { background-color: transparent; color: #0d6efd; border-left: 2px solid #0d6efd; }
+        #sidebar .sub-menu .nav-link.active { background-color: transparent; color: #0d6efd; font-weight: bold; border-left: 2px solid #0d6efd; }
+        
+        /* Nội dung chính */
+        #main-content { margin-left: 300px; padding: 40px; }
+        .ebook-container { max-width: 900px; margin: 0 auto; background: #fff; padding: 50px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        
+        /* Trang bìa */
+        .cover-page { text-align: center; padding: 80px 20px; border-bottom: 2px solid #0d6efd; margin-bottom: 50px; background: linear-gradient(135deg, #e3f2fd 0%, #f8f9fa 100%); border-radius: 10px; }
+        .cover-page h4 { color: #dc3545; font-weight: bold; margin-bottom: 20px; text-transform: uppercase; }
+        .cover-page h1 { font-size: 2.5rem; font-weight: 800; color: #0d6efd; margin-bottom: 30px; text-transform: uppercase; }
+        .cover-page .author-info { font-size: 1.1rem; color: #555; margin-top: 40px; }
+        
+        /* Định dạng nội dung */
+        h2.chapter-title { color: #0d6efd; font-weight: bold; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top: 50px; margin-bottom: 20px; text-transform: uppercase; }
+        h3.section-title { color: #dc3545; font-size: 1.3rem; font-weight: bold; margin-top: 30px; margin-bottom: 15px; scroll-margin-top: 20px; display: flex; align-items: center; flex-wrap: wrap; gap: 10px;}
+        p { line-height: 1.7; font-size: 1.05rem; }
+        ul li { margin-bottom: 10px; line-height: 1.6; font-size: 1.05rem; }
+        
+        /* Khối hiển thị thông báo */
+        .highlight-box { background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 0 5px 5px 0; }
+        .inherit-note { background-color: #e8f5e9; border-left: 4px solid #28a745; padding: 15px; margin: 20px 0; border-radius: 0 5px 5px 0; font-size: 1rem; color: #155724;}
+        
+        /* Nhãn hiển thị phân quyền kế thừa */
+        .badge-role { font-size: 0.8rem; font-weight: normal; letter-spacing: 0.5px; padding: 5px 10px; }
+        
+        /* Bảng phân quyền */
+        .permission-table th { background-color: #f1f8ff; color: #0d6efd; text-align: center; vertical-align: middle; }
+        .permission-table td { text-align: center; vertical-align: middle; }
+        .permission-table td.text-start { text-align: left; font-weight: 500;}
+        .check-icon { color: #28a745; font-size: 1.2rem; }
+
+        /* Placeholder ảnh cũ (Giữ lại để dùng chỗ khác nếu cần) */
+        .img-placeholder { width: 100%; height: 200px; background-color: #e9ecef; display: flex; align-items: center; justify-content: center; color: #6c757d; font-style: italic; border-radius: 8px; margin: 20px 0; border: 2px dashed #ccc; }
+        
+        /* Nút Toggle Menu Mobile */
+        #menu-toggle { display: none; position: fixed; bottom: 20px; right: 20px; z-index: 1050; border-radius: 50%; width: 50px; height: 50px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+
+        /* Responsive Điện thoại */
+        @media (max-width: 991.98px) {
+            #sidebar { transform: translateX(-100%); transition: transform 0.3s ease-in-out; }
+            #sidebar.show { transform: translateX(0); }
+            #main-content { margin-left: 0; padding: 20px; }
+            .ebook-container { padding: 20px; }
+            #menu-toggle { display: block; }
+            .cover-page h1 { font-size: 1.8rem; }
+            .permission-table th, .permission-table td { font-size: 0.85rem; padding: 5px; }
+        }
+
+        /* Khi in ấn */
+        @media print {
+            #sidebar, #menu-toggle, .no-print { display: none !important; }
+            #main-content { margin-left: 0; padding: 0; }
+            .ebook-container { box-shadow: none; max-width: 100%; padding: 0; }
+            .cover-page { page-break-after: always; }
+            h2.chapter-title { page-break-before: always; }
+            img { max-height: none !important; } /* Khi in thì cho ảnh bung hết cỡ */
+        }
+    </style>
+</head>
+<body data-bs-spy="scroll" data-bs-target="#sidebar-nav" data-bs-offset="50">
+
+    <button class="btn btn-primary" id="menu-toggle"><i class="fas fa-bars"></i></button>
+
+    <nav id="sidebar" class="flex-column align-items-stretch p-3">
+        <div class="text-center mb-4">
+            <h5 class="fw-bold text-primary"><i class="fas fa-book-open"></i> EBOOK HƯỚNG DẪN</h5>
+            <hr>
+        </div>
+        
+        <div id="sidebar-nav">
+            <a class="nav-link" href="#trang-bia" style="justify-content: flex-start; gap: 10px;">
+                <i class="fas fa-home"></i> Lời mở đầu
+            </a>
+            <a class="nav-link" href="#bang-phan-quyen" style="justify-content: flex-start; gap: 10px;">
+                <i class="fas fa-sitemap"></i> Bảng Phân Quyền
+            </a>
+            
+            <a class="nav-link mt-2 chapter-link" href="#chuong-1" data-target="menu-c1">
+                <span><i class="fas fa-users"></i> Chương 1: Giáo viên</span>
+                <i class="fas fa-chevron-right"></i>
+            </a>
+            <div id="menu-c1" class="sub-menu">
+                <nav class="nav flex-column">
+                    <a class="nav-link sub-link" href="#muc-1-1">1.1. Truy cập và xem lịch</a>
+                    <a class="nav-link sub-link" href="#muc-1-2">1.2. Lọc nhanh (Highlight)</a>
+                    <a class="nav-link sub-link" href="#muc-1-3">1.3. Tra cứu và In ấn</a>
+                </nav>
+            </div>
+
+            <a class="nav-link mt-2 chapter-link" href="#chuong-2" data-target="menu-c2">
+                <span><i class="fas fa-layer-group"></i> Chương 2: Tổ chuyên môn</span>
+                <i class="fas fa-chevron-right"></i>
+            </a>
+            <div id="menu-c2" class="sub-menu">
+                <nav class="nav flex-column">
+                    <a class="nav-link sub-link" href="#muc-2-1">2.1. Đăng nhập và đổi MK</a>
+                    <a class="nav-link sub-link" href="#muc-2-2">2.2. Nhập lịch công tác</a>
+                </nav>
+            </div>
+
+            <a class="nav-link mt-2 chapter-link" href="#chuong-3" data-target="menu-c3">
+                <span><i class="fas fa-user-tie"></i> Chương 3: Ban Giám Hiệu</span>
+                <i class="fas fa-chevron-right"></i>
+            </a>
+            <div id="menu-c3" class="sub-menu">
+                <nav class="nav flex-column">
+                    <a class="nav-link sub-link" href="#muc-3-1">3.1. Thiết lập chung (Tab 1)</a>
+                    <a class="nav-link sub-link" href="#muc-3-2">3.2. Nhập Excel (Tab 3)</a>
+                    <a class="nav-link sub-link" href="#muc-3-3">3.3. Quản lý sự kiện (Tab 4 & 5)</a>
+                </nav>
+            </div>
+
+            <a class="nav-link mt-2 chapter-link" href="#chuong-4" data-target="menu-c4">
+                <span><i class="fas fa-cogs"></i> Chương 4: Root Admin</span>
+                <i class="fas fa-chevron-right"></i>
+            </a>
+            <div id="menu-c4" class="sub-menu">
+                <nav class="nav flex-column">
+                    <a class="nav-link sub-link" href="#muc-4-1">4.1. Khởi tạo & Cấp phát link</a>
+                </nav>
+            </div>
+        </div>
+
+        <div class="mt-4 text-center pb-5">
+            <button class="btn btn-outline-secondary w-100 no-print" onclick="window.print()"><i class="fas fa-print"></i> In / Xuất PDF</button>
+        </div>
+    </nav>
+
+    <div id="main-content">
+        <div class="ebook-container">
+            
+            <div id="trang-bia" class="cover-page">
+                <h4>Sở Giáo dục và Đào tạo Đắk Lắk<br>Trường THPT Số 1 Trần Phú</h4>
+                <div class="my-4"><i class="fas fa-tablet-alt fa-4x text-primary"></i> <i class="fas fa-laptop fa-4x text-primary ms-3"></i></div>
+                <h1>CẨM NANG SỬ DỤNG<br>HỆ THỐNG LỊCH CÔNG TÁC</h1>
+                <p class="text-muted">Phiên bản 1.0 (Bản điện tử)</p>
+                <div class="author-info">
+                    <b>Phát triển bởi:</b> Trần Hồng Dân<br>
+                    <b>Năm ban hành:</b> 2026
+                </div>
+            </div>
+
+            <div class="highlight-box">
+                <b>Lời nói đầu:</b> Chào mừng thầy/cô đến với Hệ thống Quản lý Lịch công tác trực tuyến. Hệ thống hoạt động theo tiêu chí "3 Không": <b>Không giấy tờ, Không khoảng cách, Không độ trễ</b>. Cuốn Ebook này cung cấp hướng dẫn chi tiết nhất để thầy/cô dễ dàng thao tác trên mọi thiết bị.
+            </div>
+
+            <h2 id="bang-phan-quyen" class="chapter-title" style="font-size: 1.5rem; margin-top: 30px;">Cơ chế Kế thừa Phân quyền</h2>
+            <p>Hệ thống được thiết kế theo cơ chế <b>Kế thừa quyền hạn</b>. Điều này có nghĩa là tài khoản cấp cao hơn mặc nhiên sở hữu toàn bộ các chức năng của tài khoản cấp thấp hơn, cộng thêm các đặc quyền riêng của mình.</p>
+            
+            <div class="table-responsive">
+                <table class="table table-bordered permission-table table-hover">
+                    <thead>
+                        <tr>
+                            <th style="width: 40%;">Tính năng (Tab chức năng)</th>
+                            <th>Mọi người<br><small class="text-muted">(Không cần Login)</small></th>
+                            <th>Tổ chuyên môn<br><small class="text-muted">(Tài khoản con)</small></th>
+                            <th>Quản trị Trường<br><small class="text-muted">(School Admin)</small></th>
+                            <th>Quản trị Gốc<br><small class="text-muted">(Root Admin)</small></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="text-start">Xem lịch, Tra cứu, In ấn, Lọc (Highlight)</td>
+                            <td><i class="fas fa-check-circle check-icon"></i></td>
+                            <td><i class="fas fa-check-circle check-icon"></i></td>
+                            <td><i class="fas fa-check-circle check-icon"></i></td>
+                            <td><i class="fas fa-check-circle check-icon"></i></td>
+                        </tr>
+                        <tr>
+                            <td class="text-start">Tab 2: Thêm mới / Nhập lịch thủ công</td>
+                            <td></td>
+                            <td><i class="fas fa-check-circle check-icon"></i></td>
+                            <td><i class="fas fa-check-circle check-icon"></i></td>
+                            <td><i class="fas fa-check-circle check-icon"></i></td>
+                        </tr>
+                        <tr>
+                            <td class="text-start">Tab 1: Đổi tên trường, Cài đặt mốc tuần</td>
+                            <td></td>
+                            <td></td>
+                            <td><i class="fas fa-check-circle check-icon"></i></td>
+                            <td><i class="fas fa-check-circle check-icon"></i></td>
+                        </tr>
+                        <tr>
+                            <td class="text-start">Tab 3: Tải Excel lên / Trích xuất Backup</td>
+                            <td></td>
+                            <td></td>
+                            <td><i class="fas fa-check-circle check-icon"></i></td>
+                            <td><i class="fas fa-check-circle check-icon"></i></td>
+                        </tr>
+                        <tr>
+                            <td class="text-start">Tab 4 & 5: Sửa/Xóa lịch, Tạo tài khoản con</td>
+                            <td></td>
+                            <td></td>
+                            <td><i class="fas fa-check-circle check-icon"></i></td>
+                            <td><i class="fas fa-check-circle check-icon"></i></td>
+                        </tr>
+                        <tr class="table-warning">
+                            <td class="text-start text-danger">Tab 6: Khởi tạo Trường mới & Cấp link</td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td><i class="fas fa-check-circle check-icon"></i></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h2 id="chuong-1" class="chapter-title">Chương 1: Dành cho Cán bộ, Giáo viên</h2>
+            <p><i>Quyền hạn: Xem, tra cứu, lọc thông tin và in ấn. Không yêu cầu đăng nhập.</i></p>
+
+            <h3 id="muc-1-1" class="section-title">1.1. Truy cập và xem lịch hiện tại <span class="badge bg-secondary badge-role"><i class="fas fa-globe"></i> Dành cho mọi đối tượng</span></h3>
+            <ul>
+                <li><b>Bước 1:</b> Mở trình duyệt web trên điện thoại hoặc máy tính.</li>
+                <li><b>Bước 2:</b> Truy cập vào đường link do nhà trường cung cấp.</li>
+                <li><b>Kết quả:</b> Hệ thống tự động tải lịch tuần hiện tại. Ngày làm việc của hôm nay sẽ tự động tô nền vàng nhạt.</li>
+            </ul>
+            
+            <img src="https://i.postimg.cc/RC1HHvpR/image.png" alt="Giao diện xem lịch công tác" class="img-fluid rounded shadow-sm my-4 border" style="max-height: 500px; display: block; margin: 0 auto;">
+
+            <h3 id="muc-1-2" class="section-title">1.2. Lọc nhanh việc quan trọng (Highlight) <span class="badge bg-secondary badge-role"><i class="fas fa-globe"></i> Dành cho mọi đối tượng</span></h3>
+            <p>Khi bảng lịch có quá nhiều công việc, tính năng này giúp thầy/cô không bỏ sót các sự kiện cốt lõi.</p>
+            <ul>
+                <li>Nhấn nút <b>"Highlight"</b> (biểu tượng ngôi sao) trên màn hình. Các sự kiện trọng tâm sẽ phát sáng (nền vàng, viền đỏ).</li>
+                <li>Nhấn nút này một lần nữa để tắt và đưa màn hình trở lại bình thường.</li>
+            </ul>
+
+            <h3 id="muc-1-3" class="section-title">1.3. Tra cứu và In ấn <span class="badge bg-secondary badge-role"><i class="fas fa-globe"></i> Dành cho mọi đối tượng</span></h3>
+            <ul>
+                <li><b>Tra cứu:</b> Cuộn xuống dưới, nhấn vào biểu tượng Lịch ở ô "Xem từ ngày" và chọn một ngày bất kỳ. Hệ thống sẽ xuất lịch 07 ngày tiếp theo.</li>
+                <li><b>In ấn:</b> Nhấn nút <b>"In Lịch"</b> trên máy tính, trình duyệt sẽ tự động canh lề chuẩn khổ giấy A4, loại bỏ các nút bấm thừa.</li>
+            </ul>
+
+            <h2 id="chuong-2" class="chapter-title">Chương 2: Tổ trưởng chuyên môn</h2>
+            
+            <div class="inherit-note">
+                <b><i class="fas fa-info-circle"></i> Kế thừa quyền hạn:</b> Ngoài các chức năng Xem, Lọc, In ấn ở Chương 1, Tổ trưởng chuyên môn được cấp thêm tài khoản để sử dụng các chức năng dưới đây.
+            </div>
+
+            <h3 id="muc-2-1" class="section-title">2.1. Đăng nhập và tự đổi mật khẩu</h3>
+            <ul>
+                <li>Nhấn nút <b>"Đăng nhập"</b> màu đỏ ở góc dưới. Nhập thông tin liền nhau không dấu: <code>[Tên tài khoản][Mã 4 số]</code> (VD: <b>toToan1234</b>).</li>
+                <li>Để tự bảo mật, nhấn nút <b>"Đổi MK"</b> màu vàng ở góc phải trên cùng để nhập mã bảo vệ mới.</li>
+            </ul>
+
+            <h3 id="muc-2-2" class="section-title">2.2. Nhập lịch công tác (Tab 2) <span class="badge bg-success badge-role"><i class="fas fa-unlock-alt"></i> Dành cho: Tổ chuyên môn, Admin Trường & Root</span></h3>
+            <ul>
+                <li>Vào Tab <b>"2. Nhập Lịch"</b>. Điền đầy đủ Ngày, Buổi, Giờ, Nội dung và Người thực hiện.</li>
+                <li>Nếu là sự kiện quan trọng, hãy tích chọn <b>"Đánh dấu việc cần lưu ý"</b>.</li>
+                <li>Nhấn <b>"Lưu Dữ Liệu"</b>. Sự kiện sẽ hiển thị ngay lập tức lên bảng chung.</li>
+            </ul>
+
+            <h2 id="chuong-3" class="chapter-title">Chương 3: Ban Giám Hiệu & Văn Thư (Admin Trường)</h2>
+
+            <div class="inherit-note">
+                <b><i class="fas fa-layer-group"></i> Kế thừa quyền hạn:</b> Quản trị viên cấp trường có quyền sử dụng <b>Tất cả các chức năng ở Chương 1 & Chương 2</b> (Bao gồm Tab "2. Nhập Lịch"), đồng thời có thêm các đặc quyền quản trị toàn diện hệ thống như sau:
+            </div>
+
+            <h3 id="muc-3-1" class="section-title">3.1. Thiết lập chung (Tab 1) <span class="badge bg-danger badge-role"><i class="fas fa-user-tie"></i> Đặc quyền Admin</span></h3>
+            <ul>
+                <li>Đăng nhập bằng mã định danh trường (VD: <b>thpttranphu1234</b>).</li>
+                <li>Tại Tab 1, có thể tùy biến tên "Cơ quan chủ quản", "Tên trường".</li>
+                <li>Cài đặt Mốc tuần học, số tuần và thông báo chung. Dùng nút "Sửa" nếu muốn điều chỉnh mốc đã lưu.</li>
+            </ul>
+
+            <h3 id="muc-3-2" class="section-title">3.2. Nhập/Xuất tự động bằng Excel (Tab 3) <span class="badge bg-danger badge-role"><i class="fas fa-user-tie"></i> Đặc quyền Admin</span></h3>
+            <ul>
+                <li>Chuẩn bị file Excel với 5 cột: <i>Ngày | Buổi | Giờ | Nội dung | Người thực hiện</i>.</li>
+                <li>Tải file lên và nhấn <b>"Nhập"</b>. Hệ thống tự động đẩy hàng loạt dữ liệu lên mạng trong 1 giây.</li>
+                <li>Nhấn <b>"Tải file .XLSX"</b> để trích xuất toàn bộ dữ liệu lưu về máy tính (Backup).</li>
+            </ul>
+
+            <h3 id="muc-3-3" class="section-title">3.3. Quản lý sự kiện và Phân quyền (Tab 4 & 5) <span class="badge bg-danger badge-role"><i class="fas fa-user-tie"></i> Đặc quyền Admin</span></h3>
+            <ul>
+                <li>Tại Tab 4, có thể Thêm/Sửa/Xóa từng sự kiện của bất kỳ ai. Dùng nút <b>"Sửa"</b> để cấp quyền Highlight cho các việc lớn. Nút <b>Xóa toàn bộ</b> được bảo vệ bởi mật khẩu xác thực lớp 2.</li>
+                <li>Tại Tab 5, Văn thư chủ động tạo Tên và Mã bảo mật cấp cho các Tổ chuyên môn.</li>
+            </ul>
+
+            <h2 id="chuong-4" class="chapter-title">Chương 4: Quản trị viên cấp cao (Root Admin)</h2>
+
+            <div class="inherit-note">
+                <b><i class="fas fa-crown"></i> Quyền lực tối cao:</b> Root Admin sở hữu <b>Toàn bộ quyền hạn của cả 3 Chương trên</b>. Đồng thời là người duy nhất nắm giữ Mã nguồn để nhân bản hệ thống.
+            </div>
+
+            <h3 id="muc-4-1" class="section-title">4.1. Khởi tạo & Cấp phát link (Tab 6) <span class="badge bg-dark badge-role"><i class="fas fa-cogs"></i> Chỉ dành cho Root</span></h3>
+            <ul>
+                <li>Đăng nhập bằng <b>Mật khẩu Root</b>. Vào Tab <b>"6. QUẢN LÝ TRƯỜNG"</b>.</li>
+                <li>Nhập Tên đơn vị mới và cấp Mã bảo mật (VD: THPT Y Jút - 1234). Nhấn <b>Lưu</b>.</li>
+                <li>Tại danh sách bên dưới, nhấn nút <b>"Link"</b> để copy đường dẫn URL mã hóa riêng biệt (dạng <code>?school=ID</code>) gửi cho đơn vị đó sử dụng.</li>
+                <li>Có toàn quyền kiểm soát hoặc Xóa vĩnh viễn (yêu cầu nhập lại mật khẩu Root) dữ liệu của một trường bất kỳ.</li>
+            </ul>
+            
+            <div class="text-center mt-5 pt-4 border-top">
+                <p class="text-muted">© 2026 - Phát triển bởi Dlk Edu Tech</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Xử lý Menu Mobile
+        document.getElementById('menu-toggle').addEventListener('click', function() {
+            document.getElementById('sidebar').classList.toggle('show');
+        });
+        
+        // Ẩn sidebar trên mobile khi nhấn vào mục con
+        const subLinks = document.querySelectorAll('.sub-link');
+        subLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                if(window.innerWidth <= 991.98) {
+                    document.getElementById('sidebar').classList.remove('show');
+                }
+            });
+        });
+
+        // Xử lý logic nhấn vào Chương để thả Menu Con (Accordion)
+        const chapterLinks = document.querySelectorAll('.chapter-link');
+        chapterLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                // Tắt tất cả các menu khác để tạo hiệu ứng đóng/mở gọn gàng
+                document.querySelectorAll('.sub-menu').forEach(menu => {
+                    if (menu.id !== this.getAttribute('data-target')) {
+                        menu.style.display = 'none';
+                    }
+                });
+                document.querySelectorAll('.chapter-link').forEach(btn => {
+                    if (btn !== this) {
+                        btn.classList.remove('active-chapter');
+                    }
+                });
+
+                // Xử lý bật/tắt menu được click
+                const targetId = this.getAttribute('data-target');
+                const targetMenu = document.getElementById(targetId);
+                
+                if (targetMenu.style.display === 'block') {
+                    targetMenu.style.display = 'none';
+                    this.classList.remove('active-chapter');
+                } else {
+                    targetMenu.style.display = 'block';
+                    this.classList.add('active-chapter');
+                }
+            });
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
