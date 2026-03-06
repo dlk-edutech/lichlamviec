@@ -64,6 +64,10 @@
         .task-content-wrapper { flex: 1; }
         .task-time { font-weight: bold; color: #000; }
         .task-person { font-style: italic; color: #555; margin-left: 4px; }
+
+        /* LINK ĐÍNH KÈM TRONG TASK */
+        .task-link { text-decoration: underline; color: #0d6efd; cursor: pointer; }
+        .task-link:hover { color: #0a58ca; }
         
         /* CHỨC NĂNG HIGHLIGHT */
         .btn-highlight { user-select: none; display: none; }
@@ -73,6 +77,9 @@
             border-radius: 4px;
             padding: 4px;
             transition: background-color 0.2s;
+            color: #b71c1c;
+        }
+        body.show-highlights .is-important-task .task-link {
             color: #b71c1c;
         }
 
@@ -244,6 +251,7 @@
                 <div class="col-md-3"><label class="fw-bold">Giờ:</label><input type="text" id="inputTime" class="form-control"></div>
                 <div class="col-md-3"><label class="fw-bold">Người thực hiện:</label><input type="text" id="inputPerson" class="form-control"></div>
                 <div class="col-12"><label class="fw-bold">Nội dung công việc:</label><input type="text" id="inputContent" class="form-control"></div>
+                <div class="col-12 mt-2"><label class="fw-bold">Link đính kèm (nếu có):</label><input type="url" id="inputLinkDinhKem" class="form-control" placeholder="https://..."></div>
                 
                 <div class="col-12 mt-2">
                     <div class="form-check">
@@ -362,6 +370,10 @@
         <div class="mb-3">
             <label class="fw-bold">Nội dung công việc:</label>
             <input type="text" id="modalContent" class="form-control">
+        </div>
+        <div class="mb-3">
+            <label class="fw-bold">Link đính kèm:</label>
+            <input type="url" id="modalLinkDinhKem" class="form-control" placeholder="https://...">
         </div>
         <div class="mb-3">
             <label class="fw-bold">Người thực hiện:</label>
@@ -724,7 +736,7 @@
                 return t1.localeCompare(t2);
             });
 
-            document.getElementById("manageTableBody").innerHTML = sortedList.map(item => `<tr><td>${item.date}</td><td>${item.session}</td><td>${item.time||''}</td><td>${item.content}</td><td>${item.person||''}</td><td>${item.isImportant ? '<span class="text-danger fw-bold"><i class="fas fa-star"></i> Có</span>' : ''}</td><td><button class="btn btn-xs btn-primary" onclick="editItem('${item.key}','${item.date}','${item.session}','${item.time}','${item.content}','${item.person}', ${item.isImportant ? true : false})">Sửa</button> <button class="btn btn-xs btn-danger" onclick="deleteItem('${item.key}')">Xóa</button></td></tr>`).join("");
+            document.getElementById("manageTableBody").innerHTML = sortedList.map(item => `<tr><td>${item.date}</td><td>${item.session}</td><td>${item.time||''}</td><td>${item.content}</td><td>${item.person||''}</td><td>${item.isImportant ? '<span class="text-danger fw-bold"><i class="fas fa-star"></i> Có</span>' : ''}</td><td><button class="btn btn-xs btn-primary" onclick="editItem('${item.key}','${item.date}','${item.session}','${item.time}','${item.content}','${item.person}', ${item.isImportant ? true : false}, '${item.linkDinhKem || ''}')">Sửa</button> <button class="btn btn-xs btn-danger" onclick="deleteItem('${item.key}')">Xóa</button></td></tr>`).join("");
             
             let html = ""; let start = new Date(viewDateStr);
             
@@ -790,7 +802,11 @@
             return t1.localeCompare(t2);
         }).map(t => {
             const impClass = t.isImportant ? 'is-important-task' : '';
-            return `<div class="task-item ${impClass}"><i class="fas fa-circle task-bullet"></i><div class="task-content-wrapper"><b>${t.time?t.time+':':''}</b> ${t.content} <i>${t.person?'('+t.person+')':''}</i></div></div>`;
+            let contentHtml = t.content;
+            if (t.linkDinhKem && t.linkDinhKem.trim() !== '') {
+                contentHtml = `<a href="${t.linkDinhKem}" target="_blank" class="task-link" title="Mở liên kết">${t.content}</a>`;
+            }
+            return `<div class="task-item ${impClass}"><i class="fas fa-circle task-bullet"></i><div class="task-content-wrapper"><b>${t.time?t.time+':':''}</b> ${contentHtml} <i>${t.person?'('+t.person+')':''}</i></div></div>`;
         }).join(""); 
     }
 
@@ -941,6 +957,7 @@
             session: document.getElementById("inputSession").value, 
             time: document.getElementById("inputTime").value, 
             content: document.getElementById("inputContent").value, 
+            linkDinhKem: document.getElementById("inputLinkDinhKem").value,
             person: document.getElementById("inputPerson").value, 
             isImportant: document.getElementById("inputImportant").checked,
             creator: currentUser
@@ -953,16 +970,18 @@
     window.cancelEdit = () => { 
         document.getElementById("editKey").value=""; 
         document.getElementById("inputContent").value=""; 
+        document.getElementById("inputLinkDinhKem").value="";
         document.getElementById("inputImportant").checked = false;
         loadSchedule(); 
     };
     
-    window.editItem = (k,d,s,t,c,p, isImp) => { 
+    window.editItem = (k,d,s,t,c,p, isImp, linkDinhKem) => { 
         document.getElementById("modalKey").value = k;
         document.getElementById("modalDate").value = d;
         document.getElementById("modalSession").value = s;
         document.getElementById("modalTime").value = t;
         document.getElementById("modalContent").value = c;
+        document.getElementById("modalLinkDinhKem").value = linkDinhKem !== 'undefined' ? linkDinhKem : '';
         document.getElementById("modalPerson").value = p;
         document.getElementById("modalImportant").checked = (isImp === true || isImp === 'true');
         const myModal = new bootstrap.Modal(document.getElementById('editModal'));
@@ -976,6 +995,7 @@
             session: document.getElementById("modalSession").value,
             time: document.getElementById("modalTime").value,
             content: document.getElementById("modalContent").value,
+            linkDinhKem: document.getElementById("modalLinkDinhKem").value,
             person: document.getElementById("modalPerson").value,
             isImportant: document.getElementById("modalImportant").checked,
             creator: currentUser + " (Edited)"
